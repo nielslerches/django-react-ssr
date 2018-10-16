@@ -21,7 +21,7 @@ services:
       dockerfile: Dockerfile
     working_dir: /mnt
     command:
-      - ./node_modules/.bin/webpack
+      - ./node_modules/.bin/webpack-cli
       - --config=webpack.config.js
       - --display-error-details
       - --watch
