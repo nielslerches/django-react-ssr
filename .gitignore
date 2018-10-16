@@ -1,0 +1,7 @@
+.venv
+services/web/db.sqlite3
+services/web/assets/bundles/*
+services/web/assets/stats
+__pycache__/
+*.pyc
+node_modules

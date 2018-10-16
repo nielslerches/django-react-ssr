@@ -1,0 +1,5 @@
+Django
+psycopg2
+django-webpack-loader
+dumb-init
+requests

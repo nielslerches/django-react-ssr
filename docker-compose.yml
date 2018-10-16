@@ -1,0 +1,47 @@
+version: "3"
+
+services:
+  django:
+    build:
+      context: ./services/web/
+      dockerfile: Dockerfile
+    working_dir: /mnt
+    command:
+      - python3
+      - manage.py
+      - runserver
+      - 0.0.0.0:8000
+    volumes:
+      - ./services/web/:/mnt
+    ports:
+      - "8000:8000"
+  webpack:
+    build:
+      context: ./services/web/
+      dockerfile: Dockerfile
+    working_dir: /mnt
+    command:
+      - ./node_modules/.bin/webpack
+      - --config=webpack.config.js
+      - --display-error-details
+      - --watch
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./services/web/:/mnt
+  ssr:
+    build:
+      context: ./services/web/
+      dockerfile: Dockerfile
+    working_dir: /mnt
+    command:
+      - ./node_modules/.bin/nodemon
+      - scripts/mini-ssr.js
+    environment:
+      - NODE_ENV=development
+      - HOST=0.0.0.0
+      - STATS_FILE=./assets/stats/node.json
+    volumes:
+      - ./services/web/:/mnt
+    ports:
+      - "4000:4000"

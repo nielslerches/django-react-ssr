@@ -1,0 +1,18 @@
+{% load render_bundle from webpack_loader %}
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>CMS</title>
+    </head>
+    <body>
+        {% if request.GET.ssr == '1' %}
+            <div id="root">{{ react_render | safe }}</div>
+            {% render_bundle 'cms-hydrate' %}
+        {% else %}
+            <div id="root"></div>
+            {% render_bundle 'cms-client' %}
+        {% endif %}
+    </body>
+</html>
