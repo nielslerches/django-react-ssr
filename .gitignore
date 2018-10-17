@@ -6,3 +6,4 @@ __pycache__/
 *.pyc
 node_modules
 .vscode
+services/web/assets/static_renders/*

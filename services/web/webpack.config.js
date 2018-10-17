@@ -1,8 +1,45 @@
+const fs = require("fs");
 const path = require("path");
 const BundleTracker = require("webpack-bundle-tracker");
 
 const NODE_ENV = process.env.NODE_ENV || "development";
-const outputFilename = NODE_ENV === "development" ? "[name]" : "[name]-[hash]";
+const filename = NODE_ENV === "development" ? "[name]" : "[name]-[hash]";
+
+class StaticRenderPlugin {
+  constructor(options) {
+    this.options = options;
+
+    this.apply = this.apply.bind(this);
+  }
+
+  apply(compiler) {
+    compiler.hooks.done.tap("StaticRenderPlugin", stats => {
+      const chunks = stats.compilation.chunks.filter(
+        chunk => this.options.entries.indexOf(chunk.id) >= 0
+      );
+
+      for (let chunk of chunks) {
+        const inputFilename = chunk.files[0]; // assuming the first file acts as the entry point
+        const inputFilePath = path.join(
+          compiler.options.output.path,
+          inputFilename
+        );
+        const inputFile = require(inputFilePath).default;
+
+        const outputFilename = stats.compilation.getPath(
+          this.options.output.filename,
+          { chunk }
+        );
+        const outputFilePath = path.join(this.options.output.path, outputFilename);
+
+        fs.writeFileSync(
+          outputFilePath,
+          typeof inputFile === "function" ? inputFile() : inputFile
+        );
+      }
+    });
+  }
+}
 
 const baseConfig = {
   mode: NODE_ENV,
@@ -10,7 +47,7 @@ const baseConfig = {
   entry: {},
   output: {
     path: path.resolve(__dirname, "assets", "bundles"),
-    filename: outputFilename + ".js"
+    filename: filename + ".js"
   },
   plugins: [],
   module: {
@@ -53,18 +90,25 @@ const nodeConfig = Object.assign({}, baseConfig, {
     path: path.resolve(baseConfig.output.path, "node")
   }),
   entry: Object.assign({}, baseConfig.entry, {
-    "cms-render": path
-      .resolve(__dirname, "assets", "js", "cms", "render.js")
-      .toString()
+    "cms-render": path.resolve(__dirname, "assets", "js", "cms", "render.js")
   }),
   plugins: [
     new BundleTracker({
       path: path.resolve(__dirname, "assets", "stats"),
       filename: "node.json"
+    }),
+    new StaticRenderPlugin({
+      entries: ["cms-render"],
+      output: {
+        path: path.resolve(__dirname, "assets", "static_renders"),
+        filename: filename + ".html"
+      },
+      stats: {
+        path: path.resolve(__dirname, "assets", "stats"),
+        filename: "static.json"
+      }
     })
   ]
 });
-
-
 
 module.exports = [webConfig, nodeConfig];
