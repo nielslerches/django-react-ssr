@@ -4,7 +4,6 @@ const path = require("path");
 const express = require("express");
 const { json } = require("body-parser");
 
-const NODE_ENV = process.env.NODE_ENV || "development";
 const HOST = process.env.HOST || "127.0.0.1";
 const PORT = parseInt(process.env.PORT || "4000");
 const STATS_FILE = process.env.STATS_FILE;
@@ -60,7 +59,7 @@ app.get("/", (_, response) => {
   response.send('{"status": "ok"}');
 });
 
-if (NODE_ENV === "production") {
+app.get("/:bundlename", (request, response) => {
   const stats = JSON.parse(fs.readFileSync(STATS_FILE));
   const preloadedBundles = {};
 
@@ -78,61 +77,27 @@ if (NODE_ENV === "production") {
     preloadedBundles[bundlename] = moduleExport;
   }
 
-  app.get("/:bundlename", (request, response) => {
-    let moduleExport;
+  let moduleExport;
 
-    if (request.params.bundlename in preloadedBundles) {
-      moduleExport = preloadedBundles[request.params.bundlename];
-    } else {
-      const bundleChunks = stats.chunks[request.params.bundlename];
+  if (request.params.bundlename in preloadedBundles) {
+    moduleExport = preloadedBundles[request.params.bundlename];
+  } else {
+    const bundleChunks = stats.chunks[request.params.bundlename];
 
-      if (bundleChunks === undefined) {
-        response.statusCode = 404;
-        response.end();
-      } else {
-        const bundleChunk = bundleChunks[0];
-        moduleExport = require(bundleChunk.path).default;
-      }
-    }
-
-    const getResponseTransformer = serverSideRender(moduleExport);
-    const responseTransformer = getResponseTransformer(request);
-
-    responseTransformer.transform(response);
-  });
-} else {
-  app.get("/:bundlename", (request, response) => {
-    const statsFilePath = path.resolve(STATS_FILE);
-    const statsFileExists = fs.existsSync(statsFilePath);
-
-    if (!statsFileExists) {
+    if (bundleChunks === undefined) {
       response.statusCode = 404;
       response.end();
     } else {
-      const stats = JSON.parse(fs.readFileSync(statsFilePath));
-
-      if (stats.status !== "done") {
-        response.statusCode = 404;
-        response.end();
-      } else {
-        const bundleChunks = stats.chunks[request.params.bundlename];
-
-        if (bundleChunks === undefined) {
-          response.statusCode = 404;
-          response.end();
-        } else {
-          const bundleChunk = bundleChunks[0];
-          const moduleExport = require(bundleChunk.path).default;
-
-          const getResponseTransformer = serverSideRender(moduleExport);
-          const responseTransformer = getResponseTransformer(request);
-      
-          responseTransformer.transform(response);
-        }
-      }
+      const bundleChunk = bundleChunks[0];
+      moduleExport = require(bundleChunk.path).default;
     }
-  });
-}
+  }
+
+  const getResponseTransformer = serverSideRender(moduleExport);
+  const responseTransformer = getResponseTransformer(request);
+
+  responseTransformer.transform(response);
+});
 
 app.listen(PORT, HOST, () => {
   console.log(

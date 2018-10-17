@@ -38,7 +38,6 @@ services:
       - ./node_modules/.bin/nodemon
       - scripts/mini-ssr.js
     environment:
-      - NODE_ENV=development
       - HOST=0.0.0.0
       - PORT=4000
       - STATS_FILE=./assets/stats/node.json
