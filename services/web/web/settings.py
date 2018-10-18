@@ -38,8 +38,15 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'webpack_loader',
+    'lib',
     'cms',
 ]
+
+STATIC_RENDER_LOADER = {
+    'DEFAULT': {
+        'STATS_FILE': os.path.join(BASE_DIR, 'assets', 'stats', 'static.json')
+    }
+}
 
 WEBPACK_LOADER = {
     'DEFAULT': {
@@ -63,7 +70,7 @@ ROOT_URLCONF = 'web.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

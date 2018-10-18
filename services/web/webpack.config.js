@@ -18,6 +18,12 @@ class StaticRenderPlugin {
         chunk => this.options.entries.indexOf(chunk.id) >= 0
       );
 
+      const outputStatsFilePath = path.join(
+        this.options.stats.path,
+        this.options.stats.filename
+      );
+      const outputStatsFile = {};
+
       for (let chunk of chunks) {
         const inputFilename = chunk.files[0]; // assuming the first file acts as the entry point
         const inputFilePath = path.join(
@@ -30,13 +36,20 @@ class StaticRenderPlugin {
           this.options.output.filename,
           { chunk }
         );
-        const outputFilePath = path.join(this.options.output.path, outputFilename);
+        const outputFilePath = path.join(
+          this.options.output.path,
+          outputFilename
+        );
 
         fs.writeFileSync(
           outputFilePath,
           typeof inputFile === "function" ? inputFile() : inputFile
         );
+
+        outputStatsFile[chunk.id] = outputFilePath;
       }
+
+      fs.writeFileSync(outputStatsFilePath, JSON.stringify(outputStatsFile));
     });
   }
 }
